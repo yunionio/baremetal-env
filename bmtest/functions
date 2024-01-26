@@ -1,0 +1,43 @@
+function requires_root {
+    if [[ $EUID -ne 0 ]]; then
+        echo "ERROR: You need sudo to run the program" 2>&1
+        exit
+    fi
+}
+
+function screen_it {
+    NL=`echo -ne '\015'`
+    SESSION=$(screen -ls | awk '/[0-9].'$1'/ { print $1 }')
+    if [ ! -n "$SESSION" ]; then
+        screen -d -m -s /bin/bash -S $1
+        sleep  1.5
+    fi
+    screen -S $1 -p 0 -X stuff "$2$NL"
+}
+
+function quit_screen {
+    SESSION=$(screen -ls | awk '/[0-9].'$1'/ { print $1 }')
+    if [ -n "$SESSION" ]; then
+        screen -X -S $SESSION quit
+    fi
+    SESSION=$(screen -ls | awk '/[0-9].'$1'/ { print $1 }')
+    if [ -n "$SESSION" ]; then
+        echo "Start to kill session $SESSION"
+        SESSION_PID=$(echo $SESSION | grep -o "^[0-9]\+")
+        kill -s SIGKILL $SESSION_PID > /dev/null 2>&1
+        screen -wipe $SESSION > /dev/null 2>&1
+        # screen wipe return value is not zero, use echo to escape
+        echo "Finish killing and wiping session $SESSION"
+    fi
+}
+
+function stop_screen {
+    SESSION=$(screen -ls | awk '/[0-9].'$1'/ { print $1 }')
+    if [ -n "$SESSION" ]; then
+        #screen -X -S $SESSION quit
+        quit_screen $1
+        return 1
+    else
+        return 0
+    fi
+}
