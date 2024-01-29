@@ -170,7 +170,7 @@ def run(home, bridge, addr, mask, cpu, mem, disk_cnt, disk_size_mb, idx=0):
 
     cmd = qemutils.get_qemu()
     # cmd += " -enable-kvm -cpu host -rtc base=utc,clock=host,driftfix=none -daemonize -nodefaults -nodefconfig -no-kvm-pit-reinjection"
-    cmd += " -enable-kvm -cpu host -rtc base=utc,clock=host,driftfix=none -daemonize -no-kvm-pit-reinjection"
+    cmd += " -enable-kvm -cpu host -rtc base=utc,clock=host,driftfix=none -daemonize"
     cmd += " -global kvm-pit.lost_tick_policy=discard -machine pc,accel=kvm -k en-us -smp %d" % cpu
     cmd += " -name bmtest -m %d" % mem
     cmd += " -boot order=ncd -usb -device usb-kbd -device usb-tablet -vga std"
