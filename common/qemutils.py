@@ -41,7 +41,7 @@ def _get_qemu_version(cmd):
     m = pattern.search(cmd)
     if m is not None:
         ver = m.group('ver')
-        return map(int, ver.split('.'))
+        return tuple(map(int, ver.split('.')))
     return None
 
 

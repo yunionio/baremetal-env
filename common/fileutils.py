@@ -82,7 +82,7 @@ def file_put_contents(fn, content, append=False):
         if append:
             mode = 'a'
         with open(fn, mode) as f:
-            import stringutils
+            from . import stringutils
             f.write(stringutils.ensure_ascii(content))
         return True
     except Exception as e:

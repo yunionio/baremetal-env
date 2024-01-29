@@ -109,6 +109,8 @@ def _copy_exec(src, dst, home):
 
 
 def run(home, bridge, addr, mask, cpu, mem, disk_cnt, disk_size_mb, idx=0):
+    if not os.path.exists(home):
+        os.makedirs(home)
     nic_cnt = 2
     lan_conf_path = os.path.join(home, "lan.conf")
     bmname = "bmtest%d" % (idx)
@@ -134,7 +136,8 @@ def run(home, bridge, addr, mask, cpu, mem, disk_cnt, disk_size_mb, idx=0):
     cmd += "ifconfig %s %s netmask %s up\n" % (infname, addr, mask)
     cmd += "ifconfig %s 0 up\n" % (infname1)
     cmd += "ovs-vsctl add-port %s %s\n" % (bridge, infname1)
-    cmd += "/opt/openipmi/bin/ipmi_sim -c %s -f %s -s %s\n" % (lan_conf_path, sim_cmd_file, stat_dir)
+    # cmd += "/opt/openipmi/bin/ipmi_sim -c %s -f %s -s %s\n" % (lan_conf_path, sim_cmd_file, stat_dir)
+    cmd += "ipmi_sim -c %s -f %s -s %s\n" % (lan_conf_path, sim_cmd_file, stat_dir)
     cmd += "ovs-vsctl del-port %s %s\n" % (bridge, infname1)
     cmd += "ifconfig %s 0 down\n" % (infname1)
     cmd += "ifconfig %s 0 down\n" % (infname)
@@ -166,11 +169,14 @@ def run(home, bridge, addr, mask, cpu, mem, disk_cnt, disk_size_mb, idx=0):
     save_file_exec(bm_stop_file, cmd)
 
     cmd = qemutils.get_qemu()
-    cmd += " -enable-kvm -cpu host -rtc base=utc,clock=host,driftfix=none -daemonize -nodefaults -nodefconfig -no-kvm-pit-reinjection"
+    # cmd += " -enable-kvm -cpu host -rtc base=utc,clock=host,driftfix=none -daemonize -nodefaults -nodefconfig -no-kvm-pit-reinjection"
+    cmd += " -enable-kvm -cpu host -rtc base=utc,clock=host,driftfix=none -daemonize -no-kvm-pit-reinjection"
     cmd += " -global kvm-pit.lost_tick_policy=discard -machine pc,accel=kvm -k en-us -smp %d" % cpu
     cmd += " -name bmtest -m %d" % mem
     cmd += " -boot order=ncd -usb -device usb-kbd -device usb-tablet -vga std"
-    cmd += " -vnc :%d" % (200 + idx)
+    vnc_port = (200 + idx)
+    cmd += " -vnc :%d" % vnc_port
+    print(f"VNC port: {vnc_port}")
     cmd += " -device virtio-scsi-pci,id=scsi"
     # cmd += " -device megasas,id=scsi"
     # cmd += " -device megasas-gen2,id=scsi"
@@ -188,6 +194,7 @@ def run(home, bridge, addr, mask, cpu, mem, disk_cnt, disk_size_mb, idx=0):
         downscript = os.path.join(home, "if-down-%d.sh" % i)
         save_file_exec(downscript, ifdown_scripts(bridge, ifname))
         mac = "00:22:%s:%s:%s:%s" % (ifn[:2], ifn[2:4], ifn[4:6], ifn[6:])
+        print(f"net interface {i} MAC: {mac}")
         cmd += " -netdev type=tap,id=vnet%d,ifname=%s,vhost=on,vhostforce=off,script=%s,downscript=%s" % (i, ifname, upscript, downscript)
         cmd += " -device virtio-net-pci,netdev=vnet%d,mac=%s,addr=0x%x" % (i, mac, 0xf + i)
     pidfile = os.path.join(home, "pid")

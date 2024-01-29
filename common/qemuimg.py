@@ -1,6 +1,7 @@
 import re
 import os.path
 import logging
+import subprocess
 import uuid
 
 from . import procutils
@@ -22,13 +23,14 @@ class QemuImage(object):
     def qemu_img_version(cls):
         ver = getattr(cls, '__qemu_img_ver__', None)
         if ver is None:
-            lines = procutils.check_output_no_exception([get_qemu_img(), '--version'])
+            ret = subprocess.check_output(f"{get_qemu_img()} --version", stderr=subprocess.STDOUT, shell=True)
+            lines = ret.decode().split("\n")
             ver_pattern = re.compile('qemu-img version (?P<ver>\d+\.\d+(\.\d+)?)')
             for line in lines:
                 m = ver_pattern.search(line)
                 if m is not None:
                     ver = m.group('ver')
-                    cls.__qemu_img_ver__ = map(int, ver.split('.'))
+                    cls.__qemu_img_ver__ = tuple(map(int, ver.split('.')))
                     break
         if not hasattr(cls, '__qemu_img_ver__'):
             raise Exception('Unknown qemu-img version')

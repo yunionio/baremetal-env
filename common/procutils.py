@@ -173,7 +173,7 @@ def check_call_no_exception(cmds, **kwargs):
 
 
 def check_output(cmds, **kwargs):
-    if isinstance(cmds, basestring):
+    if isinstance(cmds, str):
         cmds = shlex.split(cmds)
     elif not hasattr(cmds, '__iter__'):
         raise Exception('Invalid type of commands')
@@ -186,9 +186,9 @@ def check_output(cmds, **kwargs):
 
 def check_output_no_exception(cmds, **kwargs):
     try:
-        return check_output(cmds, **kwargs)
+        ret = check_output(cmds, **kwargs)
+        return ret
     except Exception as e:
-        # logging.error('check_output error: %s', e)
         return str(e).split('\n')
 
 
